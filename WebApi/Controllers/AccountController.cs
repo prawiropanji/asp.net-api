@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 using WebApi.Context;
 using WebApi.Models;
+using WebApi.Repositories.Data;
 using WebApi.Utils;
 using WebAppMVC.Models;
 
@@ -13,20 +15,24 @@ namespace WebApi.Controllers
     [ApiController]
     public class AccountController : ControllerBase
     {
-        private MyContext _myContext;
-        public AccountController(MyContext myContext)
+
+        private readonly MyContext _myContext;
+   
+        private readonly AccountRepository _repository;
+    
+
+        public AccountController(AccountRepository accountRepository)
         {
-            _myContext = myContext;
+            _repository = accountRepository;
         }
 
+ 
         [HttpPost("Login")]
         public IActionResult Login(RequestLogin requestLogin)
         {
 
-            var user = _myContext.Users
-                .Include(u => u.Employee)
-                .Include(u => u.Role)
-                .SingleOrDefault(u => u.Employee.Email == requestLogin.Email);
+
+            var user = _repository.GetUserDetails(requestLogin.Email);
 
             if (user != null)
             {
@@ -60,17 +66,18 @@ namespace WebApi.Controllers
         [HttpPost("Register")]
         public IActionResult Register(RequestRegister requestRegister)
         {
-            var user = _myContext.Employees.SingleOrDefault(e => e.Email == requestRegister.Email);
-            if (user == null)
+
+            var employee = _repository.GetEmployee(requestRegister.Email);
+
+            if (employee == null)
             {
-                _myContext.Employees.Add(new Employee(0, requestRegister.Fullname, requestRegister.Email, requestRegister.BirthDate));
-                var result = _myContext.SaveChanges();
+               var result = _repository.CreateEmployee(requestRegister.Fullname, requestRegister.Email, requestRegister.BirthDate);
                 if (result > 0)
                 {
-                    var employeeId = _myContext.Employees.SingleOrDefault(e => e.Email == requestRegister.Email).Id;
-                    _myContext.Users.Add(new User(0, Hashing.HashPassword(requestRegister.Password), 1, employeeId));
-                    var usersResult = _myContext.SaveChanges();
-                    if (usersResult > 0)
+                    var employeeId = _repository.GetEmployee(requestRegister.Email).Id;
+                    var userResult = _repository.CreateUser(Hashing.HashPassword(requestRegister.Password), employeeId);
+                 
+                    if (userResult > 0)
                     {
                         return Ok(new { message = "register berhasil!", statusCode = 200 });
                     }
@@ -82,17 +89,16 @@ namespace WebApi.Controllers
            
         }
 
-        [HttpPost("Change_Password")]
+        [HttpPut("Change_Password")]
         public IActionResult ChangePassword(RequestChangePassword requestChangePassword)
         {
-            var user = _myContext.Users.Include(u => u.Employee).FirstOrDefault(u => u.Employee.Email.Equals(requestChangePassword.Email));
+            var user = _repository.GetUserEmployee(u => u.Employee.Email.Equals(requestChangePassword.Email));
 
             if (user != null) {
                 if (Hashing.ValidatePassword(requestChangePassword.OldPassword, user.Password))
                 {
                     user.Password = Hashing.HashPassword(requestChangePassword.NewPassword);
-                    _myContext.Entry(user).State = EntityState.Modified;
-                    var result = _myContext.SaveChanges();
+                    var result = _repository.UpdatePassword(user);
                     if (result > 0)
                     {
                         return Ok(new { message = "Ubah Password berhasil!", statusCode = 200 });
@@ -105,16 +111,15 @@ namespace WebApi.Controllers
             return BadRequest(new { message = "Ubah Password gagal!", statusCode = 400 });
         }
 
-        [HttpPost("Fogot_Password")]
+        [HttpPut("Fogot_Password")]
         public IActionResult ForgotPassword(RequestForgotPassword requestForgotPassword)
         {
-            var user = _myContext.Users.Include(u => u.Employee).SingleOrDefault(u => u.Employee.Email == requestForgotPassword.Email && u.Employee.FullName == requestForgotPassword.FullName);
+            var user = _repository.GetUserEmployee(u => u.Employee.Email == requestForgotPassword.Email && u.Employee.FullName == requestForgotPassword.FullName);
 
             if (user != null)
             {
                 user.Password = Hashing.HashPassword(requestForgotPassword.NewPassword);
-                _myContext.Entry(user).State = EntityState.Modified;
-                var result = _myContext.SaveChanges();
+                var result = _repository.UpdatePassword(user);
                 if (result > 0)
                 {
                     return Ok(new { message = "Ubah Password berhasil!", statusCode = 200 });
