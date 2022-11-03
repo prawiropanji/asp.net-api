@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using WebApi.Models;
 using WebApi.Repositories.Data;
 
@@ -18,51 +17,95 @@ namespace WebApi.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            var departements = _repository.Get();
-            return Ok(departements);
+            try
+            {
+                var departements = _repository.Get();
+                if (departements != null)
+                    return Ok(new { statusCode = 200, message = "Data ditemukan!", data = departements });
+                return StatusCode(204, new { statusCode = 204, message = "Data tidak ada!" });
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { statusCode = 500, message = e.Message });
+            }
+
         }
 
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
-            var departement = _repository.Get(id);
-            if (departement != null)
-                return Ok(departement);
+            try
+            {
+                var departement = _repository.Get(id);
+                if (departement != null)
+                    return Ok(new { statusCode = 200, message = "Data ditemukan!", data = departement });
 
-            return Ok(new { Message = "Data tidak Ditemukan!" });
+                return StatusCode(204, new { statusCode = 204, message = "Data tidak Ditemukan!" });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { statusCode = 500, message = e.Message });
+            }
+
         }
 
         [HttpPost]
         public IActionResult Create(Departement departement)
         {
-            var data = new Departement(departement.Id, departement.Name, departement.DivisionId);
-            var result = _repository.Create(data);
-            if (result > 0)
-                return Ok(new { Message = "Data Berhasil Disimpan!" });
+            try
+            {
+                var data = new Departement(departement.Id, departement.Name, departement.DivisionId);
+                var result = _repository.Create(data);
+                if (result > 0)
+                    return Ok(new { statusCode = 200, message = "Data Berhasil Disimpan!" });
 
-            return Ok(new { Message = "Data Gagal Disimpan!" });
+                return BadRequest(new { statusCode = 400, message = "Data Gagal Disimpan!" });
+            }
+            catch (Exception e)
+            {
+
+                return StatusCode(500, new { statusCode = 500, message = e.Message });
+            }
+
+
         }
 
         [HttpPut]
         public IActionResult Update(Departement departement)
         {
+            try
+            {
+                var result = _repository.Update(departement);
+                if (result > 0)
+                    return Ok(new { statusCode = 200, message = "Data Berhasil DiUpdate!" });
 
-            var result = _repository.Update(departement);
-            if (result > 0)
-                return Ok(new { Message = "Data Berhasil DiUpdate!" });
+                return BadRequest(new { statusCode = 400, message = "Data Gagal DiUpdate!" });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { statusCode = 500, message = e.Message });
+            }
 
-            return Ok(new { Message = "Data Gagal DiUpdate!" });
         }
 
         [HttpDelete]
         public IActionResult Delete(int id)
         {
-            var result = _repository.Delete(id);
-            if (result > 0)
-                return Ok(new { Message = "Data Berhasil Dihapus!" });
+            try
+            {
+                var result = _repository.Delete(id);
+                if (result > 0)
+                    return Ok(new { statusCode = 200, message = "Data Berhasil Dihapus!" });
 
 
-            return Ok(new { Message = "Data tidak Berhasil DiHapus!" });
+                return BadRequest(new { statusCode = 400, message = "Data tidak Berhasil DiHapus!" });
+            }
+            catch (Exception e)
+            {
+                return StatusCode(500, new { statusCode = 500, message = e.Message });
+            }
+
         }
 
 

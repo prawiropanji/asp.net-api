@@ -19,13 +19,15 @@ namespace WebApi.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
+           
             try
             {
+                throw new Exception("coba");
                 var divisions = _repository.Get();
                 if (divisions != null)
                     return Ok(new { statusCode = 200, message = "data ditemukan!", data = divisions });
 
-                return StatusCode(204, new {statusCode = 204, message = "internal server error" });
+                return StatusCode(204, new {statusCode = 204, message = "data tidak ada!" });
                
             }
             catch (Exception e)
@@ -39,17 +41,19 @@ namespace WebApi.Controllers
         [HttpGet("{id}")]
         public IActionResult Get(int id)
         {
+            
             try
             {
                 var division = _repository.Get(id);
                 if (division != null)
                     return Ok(new { statusCode = 200, message = "data ditemukan!", data = division });
 
-                return StatusCode(204, new { Message = "Data tidak Ditemukan!" });
+                return StatusCode(204, new { statusCode=204 ,message = "Data tidak Ditemukan!" });
             }
             catch (Exception e)
             {
                 return StatusCode(500, new { statusCode = 500, message = e.Message });
+
             }
             
         }
@@ -61,9 +65,9 @@ namespace WebApi.Controllers
             {
                 var result = _repository.Create(division);
                 if (result > 0)
-                    return Ok(new { Message = "Data Berhasil Disimpan!" });
+                    return Ok(new {statusCode = 200, message = "Data Berhasil Disimpan!" });
 
-                return BadRequest(new { Message = "Data Gagal Disimpan!" });
+                return BadRequest(new {statusCode = 400, message = "Data Gagal Disimpan!" });
             }
             catch (Exception e)
             {
@@ -81,13 +85,13 @@ namespace WebApi.Controllers
             {
                 var result = _repository.Update(division);
                 if (result > 0)
-                    return Ok(new { Message = "Data Berhasil DiUpdate!" });
+                    return Ok(new {statusCode = 200, message = "Data Berhasil DiUpdate!" });
 
-                return BadRequest(new { Message = "Data Gagal DiUpdate!" });
+                return BadRequest(new {statusCode = 400, message = "Data Gagal DiUpdate!" });
             }
             catch (Exception e)
             {
-                return StatusCode(500, new { statusCode = 500, message = e.Message });
+                return BadRequest(new { statusCode = 400, message = e.Message });
             }
          
         }
@@ -99,10 +103,10 @@ namespace WebApi.Controllers
             {
                 var result = _repository.Delete(id);
                 if (result > 0)
-                    return Ok(new { Message = "Data Berhasil Dihapus!" });
+                    return Ok(new {statusCode = 200, message = "Data Berhasil Dihapus!" });
 
 
-                return BadRequest(new { Message = "Data tidak Berhasil DiHapus!" });
+                return BadRequest(new {statusCode = 400, message = "Data tidak Berhasil DiHapus!" });
             }
             catch (Exception e)
             {
