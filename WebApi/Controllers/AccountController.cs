@@ -1,12 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq.Expressions;
+using System.Security.Claims;
+using System.Text;
 using WebApi.Context;
 using WebApi.Models;
 using WebApi.Repositories.Data;
 using WebApi.Utils;
+using WebApi.ViewModels;
 using WebAppMVC.Models;
 
 namespace WebApi.Controllers
@@ -16,14 +22,17 @@ namespace WebApi.Controllers
     public class AccountController : ControllerBase
     {
 
-        private readonly MyContext _myContext;
+       
    
         private readonly AccountRepository _repository;
-    
 
-        public AccountController(AccountRepository accountRepository)
+        public IConfiguration _configuration;
+
+
+        public AccountController(AccountRepository accountRepository, IConfiguration configuration)
         {
             _repository = accountRepository;
+            _configuration = configuration;
         }
 
  
@@ -39,19 +48,41 @@ namespace WebApi.Controllers
                 if (Hashing.ValidatePassword(requestLogin.Password, user.Password))
                 {
 
-                    return Ok(
-                        new
-                        {
-                            message = "berhasil login!",
-                            statusCode = 200,
-                            data = new
-                            {
-                                id = user.Id,
-                                fullname = user.Employee.FullName,
-                                email = user.Employee.Email,
-                                role = user.Role.Name
-                            }
-                        });
+                    //coba generate token
+                    var claims = new[] {
+                        new Claim(JwtRegisteredClaimNames.Sub, _configuration["Jwt:Subject"]),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                        new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
+                        new Claim("FullName", user.Employee.FullName),
+                        new Claim("Email", user.Employee.Email)
+                    };
+
+                    var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+                    var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                    var token = new JwtSecurityToken(
+                        _configuration["Jwt:Issuer"],
+                        _configuration["Jwt:Audience"],
+                        claims,
+                        expires: DateTime.UtcNow.AddMinutes(10),
+                        signingCredentials: signIn);
+
+                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+
+
+                    //return Ok(
+                    //    new
+                    //    {
+                    //        message = "berhasil login!",
+                    //        statusCode = 200,
+                    //        data = new
+                    //        {
+                    //            id = user.Id,
+                    //            fullname = user.Employee.FullName,
+                    //            email = user.Employee.Email,
+                    //            role = user.Role.Name
+                                
+                    //        }
+                    //    });
 
                 }
 
@@ -89,6 +120,7 @@ namespace WebApi.Controllers
            
         }
 
+        [Authorize]
         [HttpPut("Change_Password")]
         public IActionResult ChangePassword(RequestChangePassword requestChangePassword)
         {

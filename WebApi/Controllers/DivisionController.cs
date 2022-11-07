@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.InteropServices;
 using WebApi.Models;
@@ -6,6 +7,7 @@ using WebApi.Repositories.Data;
 
 namespace WebApi.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class DivisionController : ControllerBase
@@ -22,7 +24,7 @@ namespace WebApi.Controllers
            
             try
             {
-                throw new Exception("coba");
+             
                 var divisions = _repository.Get();
                 if (divisions != null)
                     return Ok(new { statusCode = 200, message = "data ditemukan!", data = divisions });
