@@ -1,10 +1,10 @@
 ﻿using WebApi.Utils;
 
-namespace WebApi.Models
+namespace WebApi.ViewModels
 {
     public class RequestRegister
     {
-       
+
 
         public string Email { get; set; }
         public string Fullname { get; set; }
