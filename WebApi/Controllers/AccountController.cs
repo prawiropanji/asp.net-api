@@ -53,8 +53,9 @@ namespace WebApi.Controllers
                         new Claim(JwtRegisteredClaimNames.Sub, _configuration["Jwt:Subject"]),
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
-                        new Claim("FullName", user.Employee.FullName),
-                        new Claim("Email", user.Employee.Email)
+                        new Claim("fullName", user.Employee.FullName),
+                        new Claim("email", user.Employee.Email),
+                        new Claim("role", user.Role.Name)
                     };
 
                     var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
@@ -66,23 +67,24 @@ namespace WebApi.Controllers
                         expires: DateTime.UtcNow.AddMinutes(10),
                         signingCredentials: signIn);
 
-                    return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+                    //return Ok(new JwtSecurityTokenHandler().WriteToken(token));
 
 
-                    //return Ok(
-                    //    new
-                    //    {
-                    //        message = "berhasil login!",
-                    //        statusCode = 200,
-                    //        data = new
-                    //        {
-                    //            id = user.Id,
-                    //            fullname = user.Employee.FullName,
-                    //            email = user.Employee.Email,
-                    //            role = user.Role.Name
-                                
-                    //        }
-                    //    });
+                    return Ok(
+                        new
+                        {
+                            message = "berhasil login!",
+                            statusCode = 200,
+                            data = new
+                            {
+                                id = user.Id,
+                                fullname = user.Employee.FullName,
+                                email = user.Employee.Email,
+                                role = user.Role.Name,
+                                token = new JwtSecurityTokenHandler().WriteToken(token)
+
+                            }
+                        });
 
                 }
 
@@ -143,6 +145,7 @@ namespace WebApi.Controllers
             return BadRequest(new { message = "Ubah Password gagal!", statusCode = 400 });
         }
 
+        [AllowAnonymous]
         [HttpPut("Fogot_Password")]
         public IActionResult ForgotPassword(RequestForgotPassword requestForgotPassword)
         {

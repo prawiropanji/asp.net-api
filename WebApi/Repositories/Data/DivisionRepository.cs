@@ -6,52 +6,18 @@ using WebApi.Repositories.Interfaces;
 
 namespace WebApi.Repositories.Data
 {
-    public class DivisionRepository : IRepository<Division, int>
+    public class DivisionRepository : GeneralRepository<Division, int>
     {
         private readonly MyContext _myContext;
 
-        public DivisionRepository(MyContext myContext)
+        public DivisionRepository(MyContext myContext) : base(myContext)
         {
-
             _myContext = myContext;
         }
 
-        public IEnumerable<Division> Get()
+        public Division Get(string name)
         {
-
-            return _myContext.divisions.ToList();
-        }
-
-        public Division Get(int id)
-        {
-            return _myContext.divisions.Find(id);
-        }
-
-        public int Create(Division division)
-        {
-            _myContext.divisions.Add(division);
-            return _myContext.SaveChanges();
-
-        }
-
-        public int Update(Division division)
-        {
-            _myContext.Entry(division).State = EntityState.Modified;
-            return _myContext.SaveChanges();
-
-
-        }
-
-        public int Delete(int id)
-        {
-            var division = _myContext.divisions.Find(id);
-            if (division != null)
-            {
-                _myContext.divisions.Remove(division);
-                return _myContext.SaveChanges();
-            }
-
-            return 0;
-        }
+            return _myContext.divisions.FirstOrDefault(d => d.Name == name);
+        }   
     }
 }
